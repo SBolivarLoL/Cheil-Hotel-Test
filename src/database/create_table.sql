@@ -1,0 +1,14 @@
+CREATE TABLE `hoteles` (
+	`id` TINYINT(4) NOT NULL AUTO_INCREMENT,
+	`Nombre` VARCHAR(50) NOT NULL DEFAULT '' COLLATE 'latin1_swedish_ci',
+	`Categoría` TINYINT(4) NOT NULL DEFAULT '1',
+	`Calificaciones` INT(11) NULL DEFAULT NULL,
+	`Precio` FLOAT NOT NULL DEFAULT '0',
+	`Fotos` TINYINT(4) NOT NULL DEFAULT '0',
+	PRIMARY KEY (`id`) USING BTREE
+)
+COMMENT='Hoteles y su información'
+COLLATE='latin1_swedish_ci'
+ENGINE=InnoDB
+AUTO_INCREMENT=4
+;
