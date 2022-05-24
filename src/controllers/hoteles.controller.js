@@ -65,9 +65,8 @@ const getHotelesPrecioDesc = async (req, res) => {
 
 const postHotel = async (req, res) => {
   try {
-    const { Nombre, Categoría, Estrellas, Comentario, Precio, Foto } = req.body;//verificar como aceptar los tres documentos para las fotos
-
-    if (Nombre === undefined || Categoría === undefined || Estrellas === undefined || Precio === undefined || Foto === undefined) {
+    const { Nombre, Categoría, Estrellas, Comentario, Precio, FotoUno, FotoDos, FotoTres } = req.body;
+    if (Nombre === undefined || Categoría === undefined || Estrellas === undefined || Precio === undefined || FotoUno === undefined || FotoDos === undefined || FotoTres === undefined) {
       res.status(400).json({message: "Error en el request. Por favor llene todos los campos"})
     }
     const connection = await getConnection();
@@ -75,10 +74,11 @@ const postHotel = async (req, res) => {
     BEGIN
     INSERT INTO hoteles VALUES (Null, '`+Nombre+`', `+Precio+`, `+Categoría+`)
     INSERT INTO ratings VALUES (Null, Null, `+Estrellas+`, '`+Comentario+`')
-    INSERT INTO Fotos VALUES (Null, Null, '`+Foto+`')
+    INSERT INTO Fotos VALUES (Null, Null, `+FotoUno+`)
+    INSERT INTO Fotos VALUES (Null, Null, `+FotoDos+`)
+    INSERT INTO Fotos VALUES (Null, Null, `+FotoTres+`)
     END;
-    `
-    );
+    `); //falta ver cómo obtener el id del hotel recien insertado para colocarlo en el segudo campo de ratings y fotos, así que esté la información acorde a el hotel
     res.json({message: "Se ha añadido el hotel."});
   } catch (error) {
     res.status(500);
@@ -86,12 +86,16 @@ const postHotel = async (req, res) => {
   }
 };
 
-const deleteHotel = async (req, res) => { //Falta arreglar esta
+const deleteHotel = async (req, res) => {
   try {
     const { id } = req.params;
     const connection = await getConnection();
     const result = await connection.query(`
+    BEGIN
     DELETE FROM hoteles WHERE id = `+id+`
+    DELETE FROM ratings WHERE Hotel_id = `+id+`
+    DELETE FROM fotos WHERE Pertenece_id = `+id+`
+    END;
     `);
     res.json(result);
   } catch (error) {
@@ -100,10 +104,10 @@ const deleteHotel = async (req, res) => { //Falta arreglar esta
   }
 };
 
-const updateHotel = async (req, res) => { //Falta arreglar esta
+const updateHotel = async (req, res) => { //falta ver cómo hacer para insertar solo los valores que se vayan a actualizar y hacer el query de acuerdo a este
   try {
     const { id } = req.params;
-    const { Nombre, Categoría, Calificaciones, Precio, Fotos } = req.body;
+    const { Nombre, Categoría, Precio, Fotos } = req.body;
     const hotelCambios = { Nombre, Categoría, Calificaciones, Precio, Fotos };
     const connection = await getConnection();
     const result = await connection.query(
