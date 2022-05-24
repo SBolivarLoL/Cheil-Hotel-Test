@@ -1,11 +1,18 @@
 import { getConnection } from "./../database/database";
 
+/**
+ * "getHoteles" is a function that gets the hoteles from the database and sends them to the client.
+ * @param req - The request object.
+ * @param res - the response object
+ */
 const getHoteles = async (req, res) => {
   try {
     const connection = await getConnection();
-    const result = await connection.query(
-      "SELECT id, Nombre, Categoría, Calificaciones, Precio, Fotos FROM hoteles"
-    );
+    const result = await connection.query(`
+    SELECT h.Nombre, h.Precio, h.Categoría, f.Foto, r.Estrellas, r.Comentario
+    FROM hoteles h, fotos f, ratings r
+    WHERE h.id = f.Pertenece_id AND h.id = r.Hotel_id;
+    `);
     res.json(result);
   } catch (error) {
     res.status(500);
@@ -13,11 +20,20 @@ const getHoteles = async (req, res) => {
   }
 };
 
+/**
+ * It's a function that gets the connection to the database, then queries the database for the
+ * information I want, and then sends the result to the client ordered by price in ascending order.
+ * @param req - The request object.
+ * @param res - the response object
+ */
 const getHotelesPrecio = async (req, res) => {
   try {
     const connection = await getConnection();
-    const result = await connection.query(
-      "SELECT id, Nombre, Categoría, Calificaciones, Precio, Fotos FROM hoteles ORDER BY Precio DESC"
+    const result = await connection.query(`
+    SELECT h.Nombre, h.Precio, h.Categoría, f.Foto, r.Estrellas, r.Comentario
+    FROM hoteles h, fotos f, ratings r
+    WHERE h.id = f.Pertenece_id AND h.id = r.Hotel_id
+    ORDER BY Precio ASC; `
     );
     res.json(result);
   } catch (error) {
@@ -26,12 +42,20 @@ const getHotelesPrecio = async (req, res) => {
   }
 };
 
-const getHotelesPrecioAsc = async (req, res) => {
+/**
+ * It gets the connection to the database, then it queries the database and returns the result in a
+ * JSON format of all the hoteles ordered by precio in descending order.
+ * @param req - The request object.
+ * @param res - the response object
+ */
+const getHotelesPrecioDesc = async (req, res) => {
   try {
     const connection = await getConnection();
-    const result = await connection.query(
-      "SELECT id, Nombre, Categoría, Calificaciones, Precio, Fotos FROM hoteles ORDER BY Precio ASC"
-    );
+    const result = await connection.query(`
+    SELECT h.Nombre, h.Precio, h.Categoría, f.Foto, r.Estrellas, r.Comentario
+    FROM hoteles h, fotos f, ratings r
+    WHERE h.id = f.Pertenece_id AND h.id = r.Hotel_id
+    ORDER BY Precio DESC; `);
     res.json(result);
   } catch (error) {
     res.status(500);
@@ -41,14 +65,19 @@ const getHotelesPrecioAsc = async (req, res) => {
 
 const postHotel = async (req, res) => {
   try {
-    const { Nombre, Categoría, Calificaciones, Precio, Fotos } = req.body;
+    const { Nombre, Categoría, Estrellas, Comentario, Precio, Foto } = req.body;//verificar como aceptar los tres documentos para las fotos
 
-    if (Nombre === undefined || Categoría === undefined || Calificaciones === undefined || Precio === undefined || Fotos === undefined) {
+    if (Nombre === undefined || Categoría === undefined || Estrellas === undefined || Precio === undefined || Foto === undefined) {
       res.status(400).json({message: "Error en el request. Por favor llene todos los campos"})
     }
     const connection = await getConnection();
-    await connection.query(
-      "INSERT INTO hoteles VALUES (NULL, '"+Nombre+"', "+Categoría+", "+Calificaciones+", "+Precio+", '"+Fotos+"')"
+    await connection.query(`
+    BEGIN
+    INSERT INTO hoteles VALUES (Null, '`+Nombre+`', `+Precio+`, `+Categoría+`)
+    INSERT INTO ratings VALUES (Null, Null, `+Estrellas+`, '`+Comentario+`')
+    INSERT INTO Fotos VALUES (Null, Null, '`+Foto+`')
+    END;
+    `
     );
     res.json({message: "Se ha añadido el hotel."});
   } catch (error) {
@@ -57,13 +86,13 @@ const postHotel = async (req, res) => {
   }
 };
 
-const deleteHotel = async (req, res) => {
+const deleteHotel = async (req, res) => { //Falta arreglar esta
   try {
-    const { Nombre } = req.params;
+    const { id } = req.params;
     const connection = await getConnection();
-    const result = await connection.query(
-      "DELETE FROM hoteles WHERE Nombre = '"+Nombre+"'"
-    );
+    const result = await connection.query(`
+    DELETE FROM hoteles WHERE id = `+id+`
+    `);
     res.json(result);
   } catch (error) {
     res.status(500);
@@ -71,7 +100,7 @@ const deleteHotel = async (req, res) => {
   }
 };
 
-const updateHotel = async (req, res) => {
+const updateHotel = async (req, res) => { //Falta arreglar esta
   try {
     const { id } = req.params;
     const { Nombre, Categoría, Calificaciones, Precio, Fotos } = req.body;
@@ -87,10 +116,11 @@ const updateHotel = async (req, res) => {
   }
 };
 
+/* It's exporting the functions so that they can be used in other files. */
 export const methods = {
   getHoteles,
   getHotelesPrecio,
-  getHotelesPrecioAsc,
+  getHotelesPrecioDesc,
   postHotel,
   deleteHotel,
   updateHotel
